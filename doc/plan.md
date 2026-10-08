@@ -33,6 +33,8 @@ Ecommerce de productos de computación: PC, monitores, teclados, mouses, audio y
 | 5 | Carrito (panel y página), checkout en 3 pasos y confirmación | Hecha |
 | 6 | Login, registro, perfil, pedidos y favoritos | Hecha |
 | 7 | Admin: resumen, tabla de productos, formulario de producto y pedidos | Hecha |
+| 8 | Panel de administración propio (menú lateral y barra superior, sin cabecera de tienda) con gestión de productos (editar, eliminar), pagos y usuarios | Hecha |
+| 9 | Hero de la home compacto y en carrusel (3 diapositivas, autoavance con pausa, flechas y puntos) | Hecha |
 
 ## 3. Mapa de rutas
 
@@ -48,16 +50,19 @@ Ecommerce de productos de computación: PC, monitores, teclados, mouses, audio y
 | `/cuenta` | Perfil |
 | `/cuenta/pedidos` | Pedidos |
 | `/cuenta/favoritos` | Favoritos |
-| `/admin` | Resumen |
-| `/admin/productos` | Tabla de productos |
+| `/admin` | Resumen: tarjetas, ventas de 7 días, stock a reponer, últimos pagos |
+| `/admin/productos` | Tabla de productos con búsqueda, filtro y acciones (editar, ver, eliminar) |
 | `/admin/productos/nuevo` | Alta de producto |
+| `/admin/productos/[id]/editar` | Edición de producto (formulario precargado) |
 | `/admin/pedidos` | Pedidos |
+| `/admin/pagos` | Pagos con totales por estado y filtro por estado |
+| `/admin/usuarios` | Usuarios con búsqueda, filtro por rol y acciones |
 
 ## 4. Estructura del código
 
 ```
 src/
-├─ app/                  Rutas (páginas y layouts)
+├─ app/                  Rutas. `(tienda)/` agrupa la tienda con su cabecera y pie; `admin/` tiene su propio layout
 ├─ components/
 │  ├─ ui/                Componentes shadcn/ui generados
 │  ├─ layout/            Header, footer, enlace de favoritos
@@ -67,14 +72,16 @@ src/
 │  ├─ cart/              Panel, líneas, resumen y página del carrito
 │  ├─ checkout/          Checkout en pasos
 │  ├─ account/           Navegación, formularios y favoritos de la cuenta
-│  └─ admin/             Navegación, tabla y formulario de productos
+│  ├─ home/              Carrusel del hero
+│  └─ admin/             Menú, barra superior, tablas, formularios y acciones de fila
 └─ lib/
    ├─ mock-data.ts       Categorías y 22 productos de ejemplo
    ├─ mock-account.ts    Usuario y pedidos de ejemplo
+   ├─ mock-admin.ts      Usuarios, pagos y ventas de ejemplo para el admin
    ├─ catalog.ts         Filtrar, ordenar, contar marcas, histograma de precios
    ├─ cart.ts            Lógica pura del carrito y envío
    ├─ favorites.ts       Lógica pura de favoritos
-   ├─ admin.ts           Estadísticas y búsqueda del admin
+   ├─ admin.ts           Estadísticas, búsquedas y totales de pagos del admin
    ├─ persisted-store.ts Store sobre localStorage
    ├─ cart-store.ts      Hook `useCart`
    ├─ favorites-store.ts Hook `useFavorites`
@@ -94,14 +101,15 @@ Regla seguida: la lógica de negocio vive en funciones puras de `src/lib/*.ts` c
 
 ## 6. Calidad y pruebas
 
-- **Tests:** Vitest, 43 tests sobre la lógica de `src/lib` (`npm test`).
+- **Tests:** Vitest, 48 tests sobre la lógica de `src/lib` (`npm test`).
 - **Comprobaciones:** `npm run lint`, `npx tsc --noEmit` y `npm run build`, todas en verde al cierre de la Fase 7.
 - **No verificado:** ninguna pantalla se probó en un navegador. Falta revisar a mano el toggle de tema, filtros, slider, carrito, checkout y formularios, en claro y oscuro y a ancho móvil.
 - **Dependencias:** `npm audit` marca vulnerabilidades altas en `braces`, dentro de la cadena de `eslint` (solo desarrollo). No se aplicó `npm audit fix --force` porque degrada Next a v14.
 
 ## 7. Limitaciones conocidas
 
-- **Sin control de acceso:** `/admin` y `/cuenta/*` son públicas. El admin lleva `noindex`.
+- **Sin control de acceso:** `/admin/*` y `/cuenta/*` son públicas. El admin lleva `noindex`.
+- **Acciones del admin inertes:** editar, eliminar, bloquear, cambiar rol y reembolsar muestran un aviso de demostración y no cambian datos.
 - **Autenticación inerte:** login, registro y perfil no hacen nada; muestran un aviso de demostración.
 - **Pago simulado:** no se piden ni procesan datos de tarjeta. El número de pedido es aleatorio y no se guarda.
 - **404 con estado 200:** una URL inexistente como `/producto/nope` muestra la página "no encontrada" pero responde HTTP 200, por el streaming de Cache Components. Revisar con datos reales por el efecto en SEO.
@@ -153,3 +161,4 @@ npm run build
 | `8067c31` | Carrito, checkout y confirmación |
 | `9b3216b` | Login, cuenta y favoritos |
 | `fcece2b` | Admin |
+| `06b02b6` | Documento del plan |

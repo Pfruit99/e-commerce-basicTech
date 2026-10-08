@@ -1,11 +1,20 @@
 "use client";
 
-import { Plus, Search } from "lucide-react";
-import Link from "next/link";
+import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { RowActions } from "@/components/admin/row-actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -15,9 +24,12 @@ import { categories, type CategorySlug, type Product } from "@/lib/mock-data";
 
 const categoryItems = [{ value: "all", label: "Todas las categorías" }, ...categories.map((c) => ({ value: c.slug, label: c.name }))];
 
+/** Solo UI: editar abre el formulario; eliminar y los cambios no se guardan. */
 export function ProductsTable({ products }: { products: Product[] }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<CategorySlug | "all">("all");
+  const [toDelete, setToDelete] = useState<Product | null>(null);
+  const [notice, setNotice] = useState("");
   const visible = useMemo(() => filterAdminProducts(products, query, category), [products, query, category]);
 
   return (
@@ -39,13 +51,11 @@ export function ProductsTable({ products }: { products: Product[] }) {
             ))}
           </SelectContent>
         </Select>
-        <Button render={<Link href="/admin/productos/nuevo" />}>
-          <Plus /> Nuevo producto
-        </Button>
       </div>
 
       <p className="text-sm text-muted-foreground" aria-live="polite">
         {visible.length} {visible.length === 1 ? "producto" : "productos"}
+        {notice && <span role="status"> · {notice}</span>}
       </p>
 
       <div className="rounded-xl border">
@@ -56,12 +66,15 @@ export function ProductsTable({ products }: { products: Product[] }) {
               <TableHead>Categoría</TableHead>
               <TableHead className="text-right">Precio</TableHead>
               <TableHead className="text-right">Stock</TableHead>
+              <TableHead className="w-12">
+                <span className="sr-only">Acciones</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {visible.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
                   Sin resultados.
                 </TableCell>
               </TableRow>
@@ -83,12 +96,43 @@ export function ProductsTable({ products }: { products: Product[] }) {
                       p.stock
                     )}
                   </TableCell>
+                  <TableCell>
+                    <RowActions
+                      label={`Acciones de ${p.name}`}
+                      actions={[
+                        { label: "Editar", href: `/admin/productos/${p.id}/editar` },
+                        { label: "Ver en la tienda", href: `/producto/${p.slug}` },
+                        { label: "Eliminar", destructive: true, separated: true, onSelect: () => setToDelete(p) },
+                      ]}
+                    />
+                  </TableCell>
                 </TableRow>
               ))
             )}
           </TableBody>
         </Table>
       </div>
+
+      <AlertDialog open={toDelete !== null} onOpenChange={(open) => !open && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar {toDelete?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>Esta acción no se podrá deshacer cuando el panel esté conectado.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => {
+                setNotice("Demostración: no se eliminó nada.");
+                setToDelete(null);
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

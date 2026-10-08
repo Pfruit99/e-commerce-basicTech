@@ -1,6 +1,7 @@
 import { ArrowRight, Headset, RotateCcw, ShieldCheck, Truck } from "lucide-react";
 import Link from "next/link";
 
+import { HeroCarousel } from "@/components/home/hero-carousel";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductImage } from "@/components/product/product-image";
 import { Button } from "@/components/ui/button";
@@ -33,22 +34,7 @@ function SectionHeading({ title, href }: { title: string; href?: string }) {
 export default function Home() {
   return (
     <>
-      <section className="bg-muted/50">
-        <div className="mx-auto flex min-h-80 max-w-7xl flex-col justify-center gap-5 px-4 py-12">
-          <p className="text-sm font-medium text-primary">Nuevos ingresos</p>
-          <h1 className="text-4xl font-light tracking-tight sm:text-6xl">
-            Potencia <br /> sin complicaciones
-          </h1>
-          <div className="flex gap-3">
-            <Button size="lg" render={<Link href="/categoria/pc" />}>
-              Ver computadoras
-            </Button>
-            <Button size="lg" variant="outline" render={<Link href="/categoria/monitores" />}>
-              Ver monitores
-            </Button>
-          </div>
-        </div>
-      </section>
+      <HeroCarousel />
 
       <div className="mx-auto max-w-7xl space-y-16 px-4 py-12">
         <section aria-labelledby="cats">

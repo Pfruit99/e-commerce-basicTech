@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { orderTotal } from "@/lib/admin";
@@ -11,8 +12,8 @@ export default function AdminOrdersPage() {
   const orders = sortOrdersByDate(demoOrders);
 
   return (
-    <section>
-      <h2 className="mb-4 text-xl font-semibold">Pedidos</h2>
+    <>
+      <PageHeader title="Pedidos" description="Pedidos recientes de la tienda." />
       <div className="rounded-xl border">
         <Table>
           <TableHeader>
@@ -39,6 +40,6 @@ export default function AdminOrdersPage() {
           </TableBody>
         </Table>
       </div>
-    </section>
+    </>
   );
 }
