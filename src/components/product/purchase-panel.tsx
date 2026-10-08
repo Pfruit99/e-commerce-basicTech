@@ -4,11 +4,13 @@ import { Check, Heart, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/lib/cart-store";
 import { formatPrice } from "@/lib/format";
 import type { Product } from "@/lib/mock-data";
 
-/** Solo UI: el carrito real llega con la lógica de backend. */
+/** Solo UI: el carrito persiste en localStorage hasta que exista backend. */
 export function PurchasePanel({ product }: { product: Product }) {
+  const { add } = useCart();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [favorite, setFavorite] = useState(false);
@@ -49,7 +51,10 @@ export function PurchasePanel({ product }: { product: Product }) {
           </Button>
         </div>
 
-        <Button size="lg" className="flex-1" disabled={outOfStock} onClick={() => setAdded(true)}>
+        <Button size="lg" className="flex-1" disabled={outOfStock} onClick={() => {
+            add(product, qty);
+            setAdded(true);
+          }}>
           {added ? <Check /> : <ShoppingCart />}
           {added ? "Agregado al carrito" : "Agregar al carrito"}
         </Button>

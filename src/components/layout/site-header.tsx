@@ -1,6 +1,7 @@
-import { Heart, Menu, Search, ShoppingCart, User } from "lucide-react";
+import { Heart, Menu, Search, User } from "lucide-react";
 import Link from "next/link";
 
+import { CartButton } from "@/components/cart/cart-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,10 +61,7 @@ export function SiteHeader() {
             <Heart className="size-5" />
             <Badge className="absolute -top-1 -right-1 size-4 justify-center p-0 text-[10px]">3</Badge>
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Carrito" className="relative">
-            <ShoppingCart className="size-5" />
-            <Badge className="absolute -top-1 -right-1 size-4 justify-center p-0 text-[10px]">2</Badge>
-          </Button>
+          <CartButton />
           <Button variant="ghost" size="icon" aria-label="Cuenta">
             <User className="size-5" />
           </Button>
