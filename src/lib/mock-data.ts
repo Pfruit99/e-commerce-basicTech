@@ -78,3 +78,15 @@ export function getCategory(slug: string): Category | undefined {
 export function getProductsByCategory(slug: CategorySlug): Product[] {
   return products.filter((p) => p.category === slug);
 }
+
+export function getProductBySlug(slug: string): Product | undefined {
+  return products.find((p) => p.slug === slug);
+}
+
+/** Productos de la misma categoría, primero los de la misma marca. */
+export function getRelatedProducts(product: Product, limit = 4): Product[] {
+  return products
+    .filter((p) => p.category === product.category && p.id !== product.id)
+    .sort((a, b) => Number(b.brand === product.brand) - Number(a.brand === product.brand) || b.popularity - a.popularity)
+    .slice(0, limit);
+}
