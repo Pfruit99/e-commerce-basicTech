@@ -1,9 +1,8 @@
-import { Heart } from "lucide-react";
 import Link from "next/link";
 
+import { FavoriteButton } from "@/components/product/favorite-button";
 import { ProductImage } from "@/components/product/product-image";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/format";
 import type { Product } from "@/lib/mock-data";
 
@@ -24,14 +23,13 @@ export function ProductCard({ product, layout = "grid" }: { product: Product; la
         />
         {product.isNew && <Badge className="absolute top-3 left-3">Nuevo</Badge>}
       </Link>
-      <Button
+      <FavoriteButton
+        productId={product.id}
+        productName={product.name}
         variant="secondary"
         size="icon"
-        aria-label={`Agregar ${product.name} a favoritos`}
         className="absolute top-2 right-2 size-8 rounded-full"
-      >
-        <Heart className="size-4" />
-      </Button>
+      />
 
       <div className={`mt-3 space-y-1 ${isList ? "mt-0 flex-1" : ""}`}>
         <p className="text-xs text-muted-foreground">{product.brand}</p>

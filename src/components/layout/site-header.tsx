@@ -1,10 +1,10 @@
-import { Heart, Menu, Search, User } from "lucide-react";
+import { Menu, Search, User } from "lucide-react";
 import Link from "next/link";
 
 import { CartButton } from "@/components/cart/cart-button";
+import { FavoritesLink } from "@/components/layout/favorites-link";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { categories as allCategories } from "@/lib/mock-data";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -57,14 +57,11 @@ export function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-1">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" aria-label="Favoritos" className="relative">
-            <Heart className="size-5" />
-            <Badge className="absolute -top-1 -right-1 size-4 justify-center p-0 text-[10px]">3</Badge>
-          </Button>
+          <FavoritesLink />
           <CartButton />
-          <Button variant="ghost" size="icon" aria-label="Cuenta">
+          <Link href="/login" aria-label="Mi cuenta" className={buttonVariants({ variant: "ghost", size: "icon" })}>
             <User className="size-5" />
-          </Button>
+          </Link>
         </div>
       </div>
 

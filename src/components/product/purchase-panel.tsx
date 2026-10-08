@@ -1,8 +1,9 @@
 "use client";
 
-import { Check, Heart, Minus, Plus, ShoppingCart } from "lucide-react";
+import { Check, Minus, Plus, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 
+import { FavoriteButton } from "@/components/product/favorite-button";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-store";
 import { formatPrice } from "@/lib/format";
@@ -13,7 +14,6 @@ export function PurchasePanel({ product }: { product: Product }) {
   const { add } = useCart();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
-  const [favorite, setFavorite] = useState(false);
   const outOfStock = product.stock === 0;
 
   const change = (next: number) => {
@@ -59,15 +59,7 @@ export function PurchasePanel({ product }: { product: Product }) {
           {added ? "Agregado al carrito" : "Agregar al carrito"}
         </Button>
 
-        <Button
-          variant="outline"
-          size="icon-lg"
-          aria-label={favorite ? "Quitar de favoritos" : "Agregar a favoritos"}
-          aria-pressed={favorite}
-          onClick={() => setFavorite((f) => !f)}
-        >
-          <Heart className={favorite ? "fill-primary text-primary" : ""} />
-        </Button>
+        <FavoriteButton productId={product.id} productName={product.name} variant="outline" size="icon-lg" />
       </div>
     </div>
   );
