@@ -5,16 +5,10 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { categories as allCategories } from "@/lib/mock-data";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-export const categories = [
-  { name: "PC", href: "/categoria/pc" },
-  { name: "Monitores", href: "/categoria/monitores" },
-  { name: "Teclados", href: "/categoria/teclados" },
-  { name: "Mouses", href: "/categoria/mouses" },
-  { name: "Audio", href: "/categoria/audio" },
-  { name: "Componentes", href: "/categoria/componentes" },
-];
+export const categories = allCategories.map((c) => ({ name: c.name, href: `/categoria/${c.slug}` }));
 
 const perks = ["Envío confiable", "Devoluciones fáciles", "Pago seguro"];
 
