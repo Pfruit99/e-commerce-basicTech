@@ -11,3 +11,4 @@ build/
 next-env.d.ts
 .clawness/guard_sessions.json
 .qodo/
+.clawness/sessions.json
