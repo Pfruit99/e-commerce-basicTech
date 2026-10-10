@@ -12,3 +12,6 @@ next-env.d.ts
 .clawness/guard_sessions.json
 .qodo/
 .clawness/sessions.json
+
+# Cliente de Prisma generado (npm run db:generate)
+/src/generated/
