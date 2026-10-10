@@ -15,7 +15,7 @@ export function ProductCard({ product, layout = "grid" }: { product: Product; la
     <article className={`group relative ${isList ? "flex gap-4" : ""}`}>
       <Link
         href={`/producto/${product.slug}`}
-        className={`relative block overflow-hidden rounded-xl ${isList ? "w-40 shrink-0 sm:w-56" : ""}`}
+        className={`relative block overflow-hidden rounded-xl ring-1 ring-border ${isList ? "w-40 shrink-0 sm:w-56" : ""}`}
       >
         <ProductImage
           category={product.category}
@@ -31,19 +31,29 @@ export function ProductCard({ product, layout = "grid" }: { product: Product; la
         className="absolute top-2 right-2 size-8 rounded-full"
       />
 
-      <div className={`mt-3 space-y-1 ${isList ? "mt-0 flex-1" : ""}`}>
-        <p className="text-xs text-muted-foreground">{product.brand}</p>
-        <Link href={`/producto/${product.slug}`} className="block font-medium hover:text-primary">
+      <div className={`mt-3 space-y-1.5 ${isList ? "mt-0 flex-1" : ""}`}>
+        <p className="spec-label">{product.brand}</p>
+        <Link
+          href={`/producto/${product.slug}`}
+          className="block text-[15px] leading-snug font-medium tracking-tight hover:text-primary"
+        >
           {product.name}
         </Link>
-        <ul className="flex flex-wrap gap-x-2 text-xs text-muted-foreground">
-          {specs.map((s) => (
-            <li key={s}>{s}</li>
+        <ul className="spec-value flex flex-wrap gap-x-1.5 text-xs text-muted-foreground">
+          {specs.map((s, i) => (
+            <li key={s} className="flex gap-1.5">
+              {i > 0 && <span aria-hidden>·</span>}
+              {s}
+            </li>
           ))}
         </ul>
-        <div className="flex items-center justify-between pt-1">
-          <span className="font-semibold text-primary">{formatPrice(product.price)}</span>
-          {lowStock && <span className="text-xs text-destructive">¡Quedan {product.stock}!</span>}
+        <div className="flex items-baseline justify-between pt-1">
+          <span className="spec-value text-base font-semibold">{formatPrice(product.price)}</span>
+          {lowStock && (
+            <span className="spec-value text-xs text-destructive">
+              {product.stock === 0 ? "Agotado" : `Quedan ${product.stock}`}
+            </span>
+          )}
         </div>
       </div>
     </article>

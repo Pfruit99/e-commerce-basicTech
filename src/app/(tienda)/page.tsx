@@ -18,10 +18,13 @@ const bestSellers = [...products].sort((a, b) => b.popularity - a.popularity).sl
 const newArrivals = products.filter((p) => p.isNew).slice(0, 4);
 const brands = [...new Set(products.map((p) => p.brand))].sort((a, b) => a.localeCompare(b));
 
-function SectionHeading({ title, href }: { title: string; href?: string }) {
+function SectionHeading({ title, index, href }: { title: string; index: string; href?: string }) {
   return (
-    <div className="mb-6 flex items-end justify-between">
-      <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
+    <div className="mb-6 flex items-end justify-between border-b pb-3">
+      <div>
+        <p className="spec-label">{index}</p>
+        <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
+      </div>
       {href && (
         <Link href={href} className="flex items-center gap-1 text-sm text-primary hover:underline">
           Ver todo <ArrowRight className="size-4" />
@@ -47,7 +50,7 @@ export default function Home() {
                 <Link href={`/categoria/${c.slug}`} className="group block text-center">
                   <ProductImage
                     category={c.slug}
-                    className="aspect-square rounded-xl transition-colors group-hover:from-primary/20"
+                    className="aspect-square rounded-xl ring-1 ring-border transition-shadow group-hover:ring-primary"
                   />
                   <span className="mt-2 block text-sm font-medium group-hover:text-primary">{c.name}</span>
                 </Link>
@@ -57,7 +60,7 @@ export default function Home() {
         </section>
 
         <section>
-          <SectionHeading title="Más vendidos" href="/categoria/pc" />
+          <SectionHeading index="01 / Ranking" title="Más vendidos" href="/categoria/pc" />
           <div className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4">
             {bestSellers.map((p) => (
               <ProductCard key={p.id} product={p} />
@@ -65,18 +68,21 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="rounded-2xl bg-primary px-6 py-10 text-primary-foreground sm:px-12">
-          <h2 className="text-2xl font-semibold">Armá tu setup completo</h2>
-          <p className="mt-2 max-w-md text-primary-foreground/80">
-            Combiná monitor, teclado y mouse y llevate envío gratis en compras seleccionadas.
-          </p>
-          <Button variant="secondary" className="mt-5" render={<Link href="/categoria/teclados" />}>
-            Ver periféricos
+        <section className="flex flex-col gap-6 rounded-2xl border bg-card px-6 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-12">
+          <div>
+            <p className="spec-label text-primary">Setup</p>
+            <h2 className="mt-1 text-2xl font-semibold tracking-tight">Armá tu setup completo</h2>
+            <p className="mt-2 max-w-md text-muted-foreground">
+              Combiná monitor, teclado y mouse y llevate envío gratis en compras seleccionadas.
+            </p>
+          </div>
+          <Button size="lg" className="shrink-0" render={<Link href="/categoria/teclados" />}>
+            Ver periféricos <ArrowRight className="size-4" />
           </Button>
         </section>
 
         <section>
-          <SectionHeading title="Recién llegados" />
+          <SectionHeading index="02 / Novedades" title="Recién llegados" />
           <div className="grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-4">
             {newArrivals.map((p) => (
               <ProductCard key={p.id} product={p} />
@@ -85,10 +91,10 @@ export default function Home() {
         </section>
 
         <section>
-          <SectionHeading title="Marcas" />
-          <ul className="flex flex-wrap gap-3">
+          <SectionHeading index="03 / Fabricantes" title="Marcas" />
+          <ul className="flex flex-wrap gap-2">
             {brands.map((b) => (
-              <li key={b} className="rounded-full border px-4 py-1.5 text-sm text-muted-foreground">
+              <li key={b} className="spec-value rounded-md border px-3 py-1.5 text-sm text-muted-foreground">
                 {b}
               </li>
             ))}
