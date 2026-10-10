@@ -35,6 +35,7 @@ Ecommerce de productos de computación: PC, monitores, teclados, mouses, audio y
 | 7 | Admin: resumen, tabla de productos, formulario de producto y pedidos | Hecha |
 | 8 | Panel de administración propio (menú lateral y barra superior, sin cabecera de tienda) con gestión de productos (editar, eliminar), pagos y usuarios | Hecha |
 | 9 | Hero de la home compacto y en carrusel (3 diapositivas, autoavance con pausa, flechas y puntos) | Hecha |
+| 10 | Rediseño "datasheet técnico": neutros con matiz turquesa, Geist Mono para specs y cifras (`.spec-label`, `.spec-value` en `globals.css`), tarjeta de producto, home y resumen del admin. Falta aplicarlo a detalle de producto, carrito, checkout, cuenta y el resto del admin | Parcial |
 
 ## 3. Mapa de rutas
 
@@ -101,8 +102,9 @@ Regla seguida: la lógica de negocio vive en funciones puras de `src/lib/*.ts` c
 
 ## 6. Calidad y pruebas
 
-- **Tests:** Vitest, 48 tests sobre la lógica de `src/lib` (`npm test`).
-- **Comprobaciones:** `npm run lint`, `npx tsc --noEmit` y `npm run build`, todas en verde al cierre de la Fase 7.
+- **Tests:** Vitest, 55 tests sobre la lógica de `src/lib` (`npm test`).
+- **Comprobaciones:** `npx tsc --noEmit`, `npm run build` y `eslint src` en verde (2026-10-09). `npm run lint` a secas falla por scripts de `.agents/skills/`, ajenos al proyecto.
+- **Errores:** `error.tsx` y `not-found.tsx` en `(tienda)` y `admin`, más `global-error.tsx`. En esta versión de Next el reintento es `retry()`. Contrato de errores de la API en `src/lib/errors.ts` y `doc/modelo-datos.md` (7.1).
 - **No verificado:** ninguna pantalla se probó en un navegador. Falta revisar a mano el toggle de tema, filtros, slider, carrito, checkout y formularios, en claro y oscuro y a ancho móvil.
 - **Dependencias:** `npm audit` marca vulnerabilidades altas en `braces`, dentro de la cadena de `eslint` (solo desarrollo). No se aplicó `npm audit fix --force` porque degrada Next a v14.
 
@@ -121,8 +123,8 @@ Regla seguida: la lógica de negocio vive en funciones puras de `src/lib/*.ts` c
 
 Orden propuesto:
 
-1. **Modelo de datos con Prisma y PostgreSQL:** `Category`, `Brand`, `Product` (con specs), `ProductImage`, `User`, `Address`, `Order`, `OrderItem`, `Favorite`. Dinero en enteros (centavos), no en decimales flotantes.
-2. **Migraciones y seed:** cargar las categorías y los 22 productos de ejemplo.
+1. **Modelo de datos con Prisma y PostgreSQL:** hecho. 12 tablas en `prisma/schema.prisma` (detalle en `doc/modelo-datos.md`), dinero en centavos, cliente en `src/lib/db.ts`. Prisma fijado en 7.10.0.
+2. **Migraciones y seed:** migración inicial hecha (`prisma/migrations/20261009000000_init`), verificada contra un Postgres local temporal de la CLI de Prisma, **no** contra el contenedor de `docker-compose.yml` (Docker no estaba instalado). Falta el seed: cargar las categorías y los 22 productos de ejemplo (cada uno con una variante; precios del mock de USD a centavos).
 3. **Catálogo real:** reemplazar `mock-data.ts` por consultas con Prisma. Traer relaciones con `include` o un solo `JOIN` para evitar N+1. Paginación y filtros en el servidor.
 4. **Autenticación:** Auth.js (o Clerk/Lucia), sesiones en cookies `httpOnly` y `secure`, validación en el servidor en cada ruta protegida y roles (cliente y administrador).
 5. **Carrito y favoritos persistentes:** pasar de `localStorage` a base de datos para usuarios con sesión, conservando el carrito de invitado.
@@ -162,3 +164,10 @@ npm run build
 | `9b3216b` | Login, cuenta y favoritos |
 | `fcece2b` | Admin |
 | `06b02b6` | Documento del plan |
+
+## 11. Reglas_configuracion
+
+- Al momento de crear datos nuevos no uses Modales, usa paginas dedicadas para los formularios
+- no uses server actions, usa Route handlers
+- para el manejo de estado global usa Zustand
+- para formularios usar react-hook.form y zod.
