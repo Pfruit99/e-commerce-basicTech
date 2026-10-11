@@ -3,10 +3,10 @@ import Link from "next/link";
 import { FavoriteButton } from "@/components/product/favorite-button";
 import { ProductImage } from "@/components/product/product-image";
 import { Badge } from "@/components/ui/badge";
+import type { CatalogProduct } from "@/lib/catalog-types";
 import { formatPrice } from "@/lib/format";
-import type { Product } from "@/lib/mock-data";
 
-export function ProductCard({ product, layout = "grid" }: { product: Product; layout?: "grid" | "list" }) {
+export function ProductCard({ product, layout = "grid" }: { product: CatalogProduct; layout?: "grid" | "list" }) {
   const specs = Object.values(product.specs).slice(0, 3);
   const lowStock = product.stock <= 5;
   const isList = layout === "list";
@@ -48,7 +48,7 @@ export function ProductCard({ product, layout = "grid" }: { product: Product; la
           ))}
         </ul>
         <div className="flex items-baseline justify-between pt-1">
-          <span className="spec-value text-base font-semibold">{formatPrice(product.price)}</span>
+          <span className="spec-value text-base font-semibold">{formatPrice(product.priceCents)}</span>
           {lowStock && (
             <span className="spec-value text-xs text-destructive">
               {product.stock === 0 ? "Agotado" : `Quedan ${product.stock}`}

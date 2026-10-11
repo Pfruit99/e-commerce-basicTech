@@ -1,6 +1,6 @@
 # Modelo de datos (borrador)
 
-Derivado de los tipos en `src/lib/mock-*.ts`. El esquema de la sección 3 ya está implementado en `prisma/schema.prisma` (Prisma 7.10.0, generador `prisma-client` con salida en `src/generated/prisma`, conexión en `prisma.config.ts`). Si se cambia uno, hay que cambiar el otro. La migración inicial está en `prisma/migrations/20261009000000_init/` y añade `CHECK` (stock, precios, cantidades e importes no negativos) que Prisma no expresa en el esquema.
+Derivado de los tipos en `src/lib/mock-*.ts`. El esquema de la sección 3 ya está implementado en `prisma/schema.prisma` (Prisma 7.10.0 en versión exacta, generador `prisma-client` con salida en `src/generated/prisma`, conexión en `prisma.config.ts`). Si se cambia uno, hay que cambiar el otro. La migración inicial está en `prisma/migrations/20261009000000_init/` y añade `CHECK` (stock, precios, cantidades e importes no negativos) que Prisma no expresa en el esquema.
 
 Contenido: 1. Decisiones · 2. Diagrama de relaciones · 3. Esquema Prisma · 4. Descripción de los modelos · 5. Roles y permisos · 6. Flujos de estados · 7. API routes · 8. Cambios respecto al mock · 9. Alcance y pendientes.
 
@@ -442,7 +442,7 @@ Convenciones de Next.js 16 (App Router): cada endpoint es un `route.ts` con func
 
 **Lectura pública del catálogo**: las páginas son Server Components y consultan Prisma directamente, sin pasar por la API. Las rutas de `/api/products` y similares solo hacen falta si algo del cliente necesita pedir datos (por ejemplo, el buscador con sugerencias).
 
-**Escrituras de la propia interfaz** (favoritos, carrito, perfil) pueden ser Server Actions o rutas. Las rutas de abajo son el contrato si se elige API; el webhook y Auth.js **siempre** son rutas.
+**Escrituras de la propia interfaz** (favoritos, carrito, perfil, admin) van **siempre** por estas rutas, nunca por Server Actions (regla de `plan.md` §11). El webhook y Auth.js también son rutas.
 
 ```
 src/app/api/
@@ -492,10 +492,12 @@ src/app/api/
       └─ [id]/route.ts              PATCH         Bloquear, desbloquear, cambiar rol
 ```
 
+**Implementado (2026-10-10):** `GET /api/categories`, `GET /api/products` (listado o `?ids=`, máximo 50) y `GET /api/products/[slug]`, con `handler()` de `src/lib/api-handler.ts` y validación de `src/lib/catalog-api.ts`. El listado pagina con `pageSize` 12 por defecto y 48 como máximo. El resto de rutas sigue pendiente (dependen de la autenticación).
+
 ### Reglas comunes
 
 - **Autorización en cada handler**: una función `requireUser()` y otra `requireAdmin()` leen la sesión en el servidor y devuelven `401` (sin sesión) o `403` (sin permiso). Además, un proxy o middleware protege `/admin` y `/cuenta` como primera barrera, pero **no sustituye** la comprobación en el handler.
-- **Validación de entrada**: todo cuerpo, parámetro y query se valida con un esquema (Zod u otra librería mantenida, a verificar antes de instalar). Se rechaza lo desconocido.
+- **Validación de entrada**: todo cuerpo, parámetro y query se valida con un esquema Zod (regla de `plan.md` §11; verificar la versión vigente antes de instalar). Se rechaza lo desconocido. Los mismos esquemas validan los formularios del cliente con react-hook-form, así cliente y servidor comparten las reglas.
 - **Respuesta de error uniforme**: `{ "error": { "code": "STOCK_INSUFFICIENT", "message": "...", "details": ... } }`. Códigos y estados en la sección 7.1.
 - **Paginación**: `GET /api/products?page=1&pageSize=24` devuelve `{ items, total, page, pageSize }`. Máximo de `pageSize` fijado en el servidor.
 - **Filtros del catálogo**: `category`, `brand` (repetible), `minPrice`, `maxPrice`, `sort` (`popularity`, `price_asc`, `price_desc`, `name`) y las specs propias de la categoría como `spec.RAM=16 GB`. Se traducen a consultas Prisma en el servidor.
@@ -569,6 +571,7 @@ export function handler(fn: (req: NextRequest, ctx: C) => Promise<Response>) {
 - Pago solo con tarjeta por pasarela, confirmado por webhook.
 - Con variantes de producto.
 - Fuera de la primera versión: reseñas (el mock las tiene escritas a mano), cupones y seguimiento de envío.
+- Escrituras del cliente por Route Handlers, no Server Actions (`plan.md` §11).
 
 **Pendiente de decidir**
 - **Pasarela concreta** (Mercado Pago, Stripe...): define `providerRef`, el webhook y el flujo de `pay`.
@@ -576,4 +579,3 @@ export function handler(fn: (req: NextRequest, ctx: C) => Promise<Response>) {
 - **Reserva de stock**: ¿al crear el pedido (propuesta de la sección 6) o al confirmar el pago?
 - **Plazo de expiración** de un pedido `PENDING` sin pago.
 - **Hash de contraseñas**: argon2id o scrypt, según lo que ofrezca la librería elegida.
-- **Escrituras del cliente**: ¿Server Actions o rutas para carrito, favoritos y perfil?

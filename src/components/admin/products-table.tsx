@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { filterAdminProducts, LOW_STOCK_LIMIT } from "@/lib/admin";
-import { formatPrice } from "@/lib/format";
+import { formatUsd } from "@/lib/format";
 import { categories, type CategorySlug, type Product } from "@/lib/mock-data";
 
 const categoryItems = [{ value: "all", label: "Todas las categorías" }, ...categories.map((c) => ({ value: c.slug, label: c.name }))];
@@ -86,7 +86,7 @@ export function ProductsTable({ products }: { products: Product[] }) {
                     <p className="text-xs text-muted-foreground">{p.brand}</p>
                   </TableCell>
                   <TableCell>{categories.find((c) => c.slug === p.category)?.name}</TableCell>
-                  <TableCell className="text-right">{formatPrice(p.price)}</TableCell>
+                  <TableCell className="text-right">{formatUsd(p.price)}</TableCell>
                   <TableCell className="text-right">
                     {p.stock === 0 ? (
                       <Badge variant="destructive">Agotado</Badge>

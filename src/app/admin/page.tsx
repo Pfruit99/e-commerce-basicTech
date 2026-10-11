@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/admin/page-header";
 import { PaymentStatusBadge } from "@/components/admin/payment-status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { dashboardStats, LOW_STOCK_LIMIT, paymentTotals } from "@/lib/admin";
-import { formatPrice } from "@/lib/format";
+import { formatUsd } from "@/lib/format";
 import { demoOrders } from "@/lib/mock-account";
 import { adminPayments, adminUsers, salesLast7Days } from "@/lib/mock-admin";
 import { getProductById, products } from "@/lib/mock-data";
@@ -18,7 +18,7 @@ export default function AdminDashboard() {
   const peak = Math.max(...salesLast7Days.map((d) => d.amount));
 
   const cards = [
-    { title: "Cobrado", value: formatPrice(totals.paid), note: undefined, icon: DollarSign },
+    { title: "Cobrado", value: formatUsd(totals.paid), note: undefined, icon: DollarSign },
     { title: "Pedidos", value: String(stats.orderCount), note: `${stats.pendingOrderCount} pendientes`, icon: ShoppingBag },
     { title: "Usuarios", value: String(adminUsers.length), note: undefined, icon: Users },
     {
@@ -59,7 +59,7 @@ export default function AdminDashboard() {
             <ul className="flex h-48 items-end gap-3" aria-label="Ventas diarias en dólares">
               {salesLast7Days.map((d) => (
                 <li key={d.label} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
-                  <span className="spec-value text-xs text-muted-foreground">{formatPrice(d.amount)}</span>
+                  <span className="spec-value text-xs text-muted-foreground">{formatUsd(d.amount)}</span>
                   <div className="w-full rounded-t-sm bg-primary/80" style={{ height: `${(d.amount / peak) * 75}%` }} />
                   <span className="spec-label">{d.label}</span>
                 </li>
@@ -108,7 +108,7 @@ export default function AdminDashboard() {
                 </span>
                 <span className="flex shrink-0 items-center gap-3">
                   <PaymentStatusBadge status={p.status} />
-                  <span className="spec-value w-20 text-right font-medium">{formatPrice(p.amount)}</span>
+                  <span className="spec-value w-20 text-right font-medium">{formatUsd(p.amount)}</span>
                 </span>
               </li>
             ))}

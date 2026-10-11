@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
 
 import { OrderSummary } from "@/components/cart/order-summary";
+import { ProductsLoadState } from "@/components/product/products-load-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cartLines, cartTotals } from "@/lib/cart";
 import { useCart } from "@/lib/cart-store";
 import { formatPrice } from "@/lib/format";
-import { getProductById } from "@/lib/mock-data";
+import { useCatalogProducts } from "@/lib/use-catalog-products";
 
 const STEPS = ["Datos", "Envío", "Pago"] as const;
 
@@ -36,11 +37,14 @@ function Field({ id, label, children }: { id: string; label: string; children: R
 export function CheckoutView() {
   const router = useRouter();
   const { items, clear } = useCart();
-  const lines = cartLines(items, getProductById);
+  const { find, loading, error, retry } = useCatalogProducts(items.map((i) => i.productId));
+  const lines = cartLines(items, find);
   const totals = cartTotals(lines);
 
   const [step, setStep] = useState(0);
   const [payment, setPayment] = useState("card");
+
+  if (lines.length === 0 && (loading || error)) return <ProductsLoadState error={error} onRetry={retry} />;
 
   if (lines.length === 0) {
     return (

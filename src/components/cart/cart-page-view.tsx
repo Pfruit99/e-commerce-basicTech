@@ -5,14 +5,18 @@ import Link from "next/link";
 
 import { CartLines } from "@/components/cart/cart-lines";
 import { OrderSummary } from "@/components/cart/order-summary";
+import { ProductsLoadState } from "@/components/product/products-load-state";
 import { Button } from "@/components/ui/button";
 import { cartLines, cartTotals } from "@/lib/cart";
 import { useCart } from "@/lib/cart-store";
-import { getProductById } from "@/lib/mock-data";
+import { useCatalogProducts } from "@/lib/use-catalog-products";
 
 export function CartPageView() {
   const { items, clear } = useCart();
-  const lines = cartLines(items, getProductById);
+  const { find, loading, error, retry } = useCatalogProducts(items.map((i) => i.productId));
+  const lines = cartLines(items, find);
+
+  if (lines.length === 0 && (loading || error)) return <ProductsLoadState error={error} onRetry={retry} />;
 
   if (lines.length === 0) {
     return (

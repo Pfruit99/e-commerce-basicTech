@@ -6,11 +6,11 @@ import { useState } from "react";
 import { FavoriteButton } from "@/components/product/favorite-button";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart-store";
+import type { CatalogProduct } from "@/lib/catalog-types";
 import { formatPrice } from "@/lib/format";
-import type { Product } from "@/lib/mock-data";
 
-/** Solo UI: el carrito persiste en localStorage hasta que exista backend. */
-export function PurchasePanel({ product }: { product: Product }) {
+/** El carrito de invitado persiste en localStorage; el precio se vuelve a leer de la API al mostrarlo. */
+export function PurchasePanel({ product }: { product: CatalogProduct }) {
   const { add } = useCart();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
@@ -24,7 +24,7 @@ export function PurchasePanel({ product }: { product: Product }) {
   return (
     <div className="space-y-5">
       <div>
-        <p className="text-3xl font-semibold text-primary">{formatPrice(product.price)}</p>
+        <p className="text-3xl font-semibold text-primary">{formatPrice(product.priceCents)}</p>
         <p className="mt-1 text-sm text-muted-foreground">Hasta 6 cuotas sin interés</p>
       </div>
 

@@ -3,12 +3,11 @@
 import { useState } from "react";
 
 import { ProductImage } from "@/components/product/product-image";
-import type { CategorySlug } from "@/lib/mock-data";
 
 const VIEWS = ["Frente", "Lateral", "Detalle", "Caja"];
 
 /** Galería con miniaturas. Usa marcadores hasta tener fotos reales. */
-export function ProductGallery({ category, name }: { category: CategorySlug; name: string }) {
+export function ProductGallery({ category, name }: { category: string; name: string }) {
   const [active, setActive] = useState(0);
 
   return (

@@ -5,7 +5,7 @@ import { HeroCarousel } from "@/components/home/hero-carousel";
 import { ProductCard } from "@/components/product/product-card";
 import { ProductImage } from "@/components/product/product-image";
 import { Button } from "@/components/ui/button";
-import { categories, products } from "@/lib/mock-data";
+import { getBestSellers, getBrandNames, getCategories, getNewArrivals } from "@/lib/server/catalog";
 
 const benefits = [
   { icon: Truck, title: "Envío a todo el país", text: "Seguimiento en cada paso" },
@@ -13,10 +13,6 @@ const benefits = [
   { icon: ShieldCheck, title: "Pago seguro", text: "Tus datos protegidos" },
   { icon: Headset, title: "Soporte técnico", text: "Te asesoramos antes de comprar" },
 ];
-
-const bestSellers = [...products].sort((a, b) => b.popularity - a.popularity).slice(0, 8);
-const newArrivals = products.filter((p) => p.isNew).slice(0, 4);
-const brands = [...new Set(products.map((p) => p.brand))].sort((a, b) => a.localeCompare(b));
 
 function SectionHeading({ title, index, href }: { title: string; index: string; href?: string }) {
   return (
@@ -34,7 +30,14 @@ function SectionHeading({ title, index, href }: { title: string; index: string; 
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const [categories, bestSellers, newArrivals, brands] = await Promise.all([
+    getCategories(),
+    getBestSellers(8),
+    getNewArrivals(4),
+    getBrandNames(),
+  ]);
+
   return (
     <>
       <HeroCarousel />

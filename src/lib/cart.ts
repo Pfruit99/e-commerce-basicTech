@@ -1,16 +1,16 @@
-import type { Product } from "./mock-data";
+import type { CatalogProduct } from "./catalog-types";
 
 export type CartItem = { productId: string; qty: number };
-export type CartLine = { product: Product; qty: number; subtotal: number };
+export type CartLine = { product: CatalogProduct; qty: number; subtotal: number };
 export type CartTotals = { itemCount: number; subtotal: number; shipping: number; total: number };
 
-/** Montos en USD. */
-export const FREE_SHIPPING_THRESHOLD = 500;
-export const SHIPPING_FLAT = 15;
+/** Montos en centavos de USD: envío US$15, gratis desde US$500. */
+export const FREE_SHIPPING_THRESHOLD = 50_000;
+export const SHIPPING_FLAT = 1_500;
 
 const clampQty = (qty: number, stock: number) => Math.min(Math.max(0, Math.trunc(qty)), stock);
 
-export function addItem(items: CartItem[], product: Product, qty = 1): CartItem[] {
+export function addItem(items: CartItem[], product: CatalogProduct, qty = 1): CartItem[] {
   const current = items.find((i) => i.productId === product.id)?.qty ?? 0;
   const next = clampQty(current + qty, product.stock);
   if (next === 0) return items;
@@ -20,7 +20,7 @@ export function addItem(items: CartItem[], product: Product, qty = 1): CartItem[
 }
 
 /** Fija la cantidad; 0 o menos elimina la línea. */
-export function setQuantity(items: CartItem[], product: Product, qty: number): CartItem[] {
+export function setQuantity(items: CartItem[], product: CatalogProduct, qty: number): CartItem[] {
   const next = clampQty(qty, product.stock);
   if (next === 0) return removeItem(items, product.id);
   return items.map((i) => (i.productId === product.id ? { ...i, qty: next } : i));
@@ -31,10 +31,10 @@ export function removeItem(items: CartItem[], productId: string): CartItem[] {
 }
 
 /** Resuelve productos y descarta los que ya no existen. */
-export function cartLines(items: CartItem[], find: (id: string) => Product | undefined): CartLine[] {
+export function cartLines(items: CartItem[], find: (id: string) => CatalogProduct | undefined): CartLine[] {
   return items.flatMap((i) => {
     const product = find(i.productId);
-    return product ? [{ product, qty: i.qty, subtotal: product.price * i.qty }] : [];
+    return product ? [{ product, qty: i.qty, subtotal: product.priceCents * i.qty }] : [];
   });
 }
 

@@ -10,19 +10,22 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cartLines, cartTotals } from "@/lib/cart";
 import { useCart } from "@/lib/cart-store";
-import { getProductById } from "@/lib/mock-data";
+import { useCatalogProducts } from "@/lib/use-catalog-products";
 
 export function CartButton() {
   const { items } = useCart();
-  const lines = cartLines(items, getProductById);
+  const { find, loading } = useCatalogProducts(items.map((i) => i.productId));
+  const lines = cartLines(items, find);
   const totals = cartTotals(lines);
+  // El contador sale del carrito guardado para no parpadear mientras llegan los precios.
+  const itemCount = items.reduce((sum, i) => sum + i.qty, 0);
 
   return (
     <Sheet>
-      <SheetTrigger render={<Button variant="ghost" size="icon" aria-label={`Carrito (${totals.itemCount})`} className="relative" />}>
+      <SheetTrigger render={<Button variant="ghost" size="icon" aria-label={`Carrito (${itemCount})`} className="relative" />}>
         <ShoppingCart className="size-5" />
-        {totals.itemCount > 0 && (
-          <Badge className="absolute -top-1 -right-1 h-4 min-w-4 justify-center px-1 text-[10px]">{totals.itemCount}</Badge>
+        {itemCount > 0 && (
+          <Badge className="absolute -top-1 -right-1 h-4 min-w-4 justify-center px-1 text-[10px]">{itemCount}</Badge>
         )}
       </SheetTrigger>
       <SheetContent side="right" className="flex w-full flex-col sm:max-w-md">
@@ -30,7 +33,9 @@ export function CartButton() {
           <SheetTitle>Tu carrito</SheetTitle>
         </SheetHeader>
 
-        {lines.length === 0 ? (
+        {loading && lines.length === 0 ? (
+          <p className="px-4 text-sm text-muted-foreground">Cargando…</p>
+        ) : lines.length === 0 ? (
           <p className="px-4 text-sm text-muted-foreground">Todavía no agregaste productos.</p>
         ) : (
           <div className="flex-1 overflow-y-auto px-4">

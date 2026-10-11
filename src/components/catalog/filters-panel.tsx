@@ -106,6 +106,7 @@ export function FiltersPanel(props: Props) {
             <Slider
               min={min}
               max={max}
+              step={100}
               value={price}
               onValueChange={(v) => Array.isArray(v) && props.onPriceChange([v[0], v[1]])}
               aria-label="Rango de precio"

@@ -6,14 +6,13 @@ import { FavoritesLink } from "@/components/layout/favorites-link";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { categories as allCategories } from "@/lib/mock-data";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-export const categories = allCategories.map((c) => ({ name: c.name, href: `/categoria/${c.slug}` }));
+export type NavCategory = { name: string; href: string };
 
 const perks = ["Envío confiable", "Devoluciones fáciles", "Pago seguro"];
 
-export function SiteHeader() {
+export function SiteHeader({ categories }: { categories: NavCategory[] }) {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
       <div className="hidden bg-foreground text-background md:block">

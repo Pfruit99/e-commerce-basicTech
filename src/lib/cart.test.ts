@@ -3,13 +3,13 @@ import { describe, expect, it } from "vitest";
 import {
   FREE_SHIPPING_THRESHOLD, SHIPPING_FLAT, addItem, cartLines, cartTotals, removeItem, sanitizeItems, setQuantity,
 } from "./cart";
-import type { Product } from "./mock-data";
+import type { CatalogProduct } from "./catalog-types";
 
-const mk = (id: string, price: number, stock: number): Product => ({
-  id, slug: id, name: id, brand: "B", category: "pc", price, stock, popularity: 0, isNew: false, specs: {},
+const mk = (id: string, price: number, stock: number): CatalogProduct => ({
+  id, slug: id, name: id, brand: "B", category: "pc", priceCents: price, stock, popularity: 0, isNew: false, specs: {}, variantId: `v${id}`, sku: id,
 });
-const a = mk("a", 100, 3);
-const b = mk("b", 450, 10);
+const a = mk("a", 10_000, 3); // US$100
+const b = mk("b", 45_000, 10); // US$450
 const find = (id: string) => [a, b].find((p) => p.id === id);
 
 describe("addItem", () => {
@@ -39,11 +39,11 @@ describe("cartLines / cartTotals", () => {
     expect(cartTotals([])).toEqual({ itemCount: 0, subtotal: 0, shipping: 0, total: 0 }));
   it("cobra envío bajo el umbral", () => {
     const t = cartTotals(cartLines([{ productId: "a", qty: 2 }], find));
-    expect(t).toEqual({ itemCount: 2, subtotal: 200, shipping: SHIPPING_FLAT, total: 200 + SHIPPING_FLAT });
+    expect(t).toEqual({ itemCount: 2, subtotal: 20_000, shipping: SHIPPING_FLAT, total: 20_000 + SHIPPING_FLAT });
   });
   it("envío gratis desde el umbral (inclusive)", () => {
     const t = cartTotals(cartLines([{ productId: "a", qty: 1 }, { productId: "b", qty: 1 }], find));
-    expect(t.subtotal).toBe(550);
+    expect(t.subtotal).toBe(55_000);
     expect(t.shipping).toBe(0);
     expect(FREE_SHIPPING_THRESHOLD).toBeLessThanOrEqual(t.subtotal);
   });

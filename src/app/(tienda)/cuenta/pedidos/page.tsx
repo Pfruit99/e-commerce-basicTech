@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
-import { formatPrice } from "@/lib/format";
+import { formatUsd } from "@/lib/format";
 import { demoOrders, sortOrdersByDate, statusLabels } from "@/lib/mock-account";
 import { getProductById } from "@/lib/mock-data";
 
@@ -43,7 +43,7 @@ export default function OrdersPage() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-right font-semibold">{formatPrice(total)}</p>
+              <p className="mt-3 text-right font-semibold">{formatUsd(total)}</p>
             </li>
           );
         })}
