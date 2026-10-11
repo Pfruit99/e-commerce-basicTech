@@ -67,20 +67,75 @@ enum PaymentMethod {
   CARD // única en la primera versión; TRANSFER y CASH se añaden con una migración
 }
 
+// Campos base de Better Auth (id, name, email, emailVerified, image, createdAt, updatedAt) más los propios.
+// La contraseña no vive aquí: Better Auth guarda su hash en Account.password (providerId "credential").
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  name         String
-  phone        String?
-  passwordHash String
-  role         Role       @default(CUSTOMER)
-  status       UserStatus @default(ACTIVE)
-  createdAt    DateTime   @default(now())
+  id            String     @id @default(cuid())
+  email         String     @unique
+  name          String
+  emailVerified Boolean    @default(false)
+  image         String?
+  phone         String?
+  role          Role       @default(CUSTOMER)
+  status        UserStatus @default(ACTIVE)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
+  sessions  Session[]
+  accounts  Account[]
   addresses Address[]
   orders    Order[]
   favorites Favorite[]
   cart      CartItem[]
+}
+
+// Sesión de Better Auth. El token viaja en una cookie httpOnly.
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Método de acceso de un usuario. Con email y contraseña: providerId "credential" y el hash en password.
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Tokens de un solo uso de Better Auth (verificación de email, recuperación de contraseña).
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
 }
 
 model Address {
@@ -240,7 +295,7 @@ model Payment {
 }
 ```
 
-Cambio respecto al borrador anterior: `User.passwordHash` pasa a obligatorio, porque el único método de acceso es email y contraseña.
+Cambio respecto al borrador anterior: la autenticación usa Better Auth (migración `20261011043410_better_auth`). `User.passwordHash` desaparece: el hash scrypt vive en `Account.password` (providerId `credential`), y se añaden `Session`, `Account` y `Verification`, que son las tablas que exige la librería. `User` suma `emailVerified`, `image` y `updatedAt`.
 
 ## 4. Descripción de los modelos
 
@@ -253,7 +308,7 @@ Persona con cuenta. Cliente o administrador.
 | `email` | `String`, único | Usuario de acceso. Guardar en minúsculas. |
 | `name` | `String` | Nombre para mostrar y para el envío. |
 | `phone` | `String?` | Teléfono de contacto. |
-| `passwordHash` | `String` | Hash de la contraseña. Nunca se devuelve en una API. |
+| `emailVerified`, `image` | `Boolean`, `String?` | Campos base de Better Auth. Sin verificación de email por ahora. |
 | `role` | `Role` | `CUSTOMER` (por defecto) o `ADMIN`. |
 | `status` | `UserStatus` | `ACTIVE` o `BLOCKED`. Un usuario bloqueado no puede iniciar sesión ni comprar. |
 | `createdAt` | `DateTime` | Fecha de alta. |
@@ -387,7 +442,7 @@ Reglas generales: la autorización se comprueba en el servidor en cada petición
 Restricciones que se mantienen aunque el admin las pida:
 - Un admin no puede quitarse el rol ni bloquearse a sí mismo, para no dejar la tienda sin administrador.
 - Los datos de `Payment` nunca incluyen datos de tarjeta: no se piden ni se guardan.
-- `passwordHash` no sale en ninguna respuesta.
+- El hash de la contraseña (`Account.password`) no sale en ninguna respuesta (lo comprueba `tests/api/auth.api.test.ts`).
 
 ## 6. Flujos de estados
 
@@ -447,7 +502,7 @@ Convenciones de Next.js 16 (App Router): cada endpoint es un `route.ts` con func
 ```
 src/app/api/
 ├─ auth/
-│  └─ [...nextauth]/route.ts        GET, POST     Auth.js (login, logout, sesión)
+│  └─ [...all]/route.ts             GET, POST     Better Auth: sign-up/email, sign-in/email, sign-out, get-session
 ├─ register/route.ts                POST          Alta de cliente
 ├─ me/
 │  ├─ route.ts                      GET, PATCH    Perfil propio
@@ -496,7 +551,7 @@ src/app/api/
 
 ### Reglas comunes
 
-- **Autorización en cada handler**: una función `requireUser()` y otra `requireAdmin()` leen la sesión en el servidor y devuelven `401` (sin sesión) o `403` (sin permiso). Además, un proxy o middleware protege `/admin` y `/cuenta` como primera barrera, pero **no sustituye** la comprobación en el handler.
+- **Autorización en cada handler**: `requireUser()` y `requireAdmin()` (`src/lib/server/session.ts`) leen la sesión en el servidor y lanzan `UNAUTHENTICATED` (401) o `FORBIDDEN` (403). `src/proxy.ts` redirige `/admin` y `/cuenta` sin cookie como primera barrera, pero **no sustituye** la comprobación. En páginas se usa `requirePageAccess` en el layout **y en cada página**: Next renderiza la página por separado del layout, y una guarda solo en el layout deja salir su contenido.
 - **Validación de entrada**: todo cuerpo, parámetro y query se valida con un esquema Zod (regla de `plan.md` §11; verificar la versión vigente antes de instalar). Se rechaza lo desconocido. Los mismos esquemas validan los formularios del cliente con react-hook-form, así cliente y servidor comparten las reglas.
 - **Respuesta de error uniforme**: `{ "error": { "code": "STOCK_INSUFFICIENT", "message": "...", "details": ... } }`. Códigos y estados en la sección 7.1.
 - **Paginación**: `GET /api/products?page=1&pageSize=24` devuelve `{ items, total, page, pageSize }`. Máximo de `pageSize` fijado en el servidor.
@@ -505,7 +560,7 @@ src/app/api/
 - **Crear pedido (`POST /api/orders`)**: el cuerpo trae solo `addressId` (o la dirección). Las líneas salen del carrito guardado en el servidor, y precios, stock, envío y total se recalculan allí. Todo ocurre en una transacción.
 - **Webhook**: se verifica la firma de la pasarela con el cuerpo crudo, se responde `200` rápido y se procesa de forma idempotente. Nunca se confía en importes enviados por el cliente.
 - **Límite de peticiones** en login, registro y creación de pedidos.
-- **Autenticación**: Auth.js con proveedor de credenciales. Con credenciales, la librería suele exigir sesiones JWT en cookie `httpOnly` y `secure` (a verificar en la documentación vigente antes de implementar); en ese caso no hacen falta las tablas `Session` ni `Account`.
+- **Autenticación**: Better Auth 1.7 (`src/lib/auth.ts`) con email y contraseña. Se eligió en lugar de Auth.js porque la v5 de Auth.js seguía en beta y el proyecto pasó al equipo de Better Auth. Las sesiones van en la tabla `Session` con cookie `httpOnly`, `SameSite=Lax` y `secure` con HTTPS. `role` y `status` son campos del servidor (`input: false`). Un hook impide crear sesión a usuarios `BLOCKED`. Límite de 5 inicios de sesión y 3 registros por minuto y por IP.
 
 ### 7.1 Manejo de errores
 
@@ -566,7 +621,8 @@ export function handler(fn: (req: NextRequest, ctx: C) => Promise<Response>) {
 ## 9. Alcance y pendientes
 
 **Decidido**
-- Acceso con email y contraseña (Auth.js). Sin Google, recuperación ni verificación de email por ahora.
+- Acceso con email y contraseña (Better Auth). Sin Google, recuperación ni verificación de email por ahora.
+- Hash de contraseñas: scrypt, el que trae Better Auth.
 - Solo compra con cuenta.
 - Pago solo con tarjeta por pasarela, confirmado por webhook.
 - Con variantes de producto.
@@ -578,4 +634,3 @@ export function handler(fn: (req: NextRequest, ctx: C) => Promise<Response>) {
 - **Precio de una variante en la tarjeta**: mostrar «desde US$X» (mínimo) o el de la variante por defecto.
 - **Reserva de stock**: ¿al crear el pedido (propuesta de la sección 6) o al confirmar el pago?
 - **Plazo de expiración** de un pedido `PENDING` sin pago.
-- **Hash de contraseñas**: argon2id o scrypt, según lo que ofrezca la librería elegida.

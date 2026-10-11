@@ -1,10 +1,11 @@
-import { Menu, Search, User } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import Link from "next/link";
 
 import { CartButton } from "@/components/cart/cart-button";
 import { FavoritesLink } from "@/components/layout/favorites-link";
+import { UserMenu } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
@@ -58,9 +59,7 @@ export function SiteHeader({ categories }: { categories: NavCategory[] }) {
           <ThemeToggle />
           <FavoritesLink />
           <CartButton />
-          <Link href="/login" aria-label="Mi cuenta" className={buttonVariants({ variant: "ghost", size: "icon" })}>
-            <User className="size-5" />
-          </Link>
+          <UserMenu />
         </div>
       </div>
 

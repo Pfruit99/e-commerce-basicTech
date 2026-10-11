@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { handler } from "./api-handler";
@@ -32,6 +33,12 @@ describe("handler", () => {
     expect(body.error.code).toBe("INTERNAL");
     expect(JSON.stringify(body)).not.toContain("secret");
     expect(log).toHaveBeenCalledOnce();
+  });
+
+  it("relanza los errores internos de Next en vez de convertirlos en 500", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    await expect(handler(async () => redirect("/login"))()).rejects.toThrow("NEXT_REDIRECT");
+    expect(log).not.toHaveBeenCalled();
   });
 
   it("pasa los argumentos al handler", async () => {

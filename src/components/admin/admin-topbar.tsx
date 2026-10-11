@@ -1,15 +1,16 @@
 "use client";
 
-import { ExternalLink, Menu } from "lucide-react";
+import { ExternalLink, LogOut, Menu } from "lucide-react";
 import Link from "next/link";
 
+import { useSignOut } from "@/components/account/use-sign-out";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { demoUser } from "@/lib/mock-account";
 
-export function AdminTopbar() {
+export function AdminTopbar({ userName }: { userName: string }) {
+  const signOut = useSignOut();
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur">
       <Sheet>
@@ -36,13 +37,18 @@ export function AdminTopbar() {
             aria-hidden
             className="flex size-8 items-center justify-center rounded-full bg-primary/15 text-xs font-medium text-primary"
           >
-            {demoUser.name
+            {userName
               .split(" ")
-              .map((n) => n[0])
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((n) => n[0]?.toUpperCase())
               .join("")}
           </span>
-          <span className="hidden text-sm sm:block">{demoUser.name}</span>
+          <span className="hidden text-sm sm:block">{userName}</span>
         </div>
+        <Button variant="ghost" size="icon" aria-label="Cerrar sesión" onClick={signOut}>
+          <LogOut />
+        </Button>
       </div>
     </header>
   );

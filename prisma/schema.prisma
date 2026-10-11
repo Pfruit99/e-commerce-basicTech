@@ -39,20 +39,75 @@ enum PaymentMethod {
   CARD // única en la primera versión; TRANSFER y CASH se añaden con una migración
 }
 
+// Campos base de Better Auth (id, name, email, emailVerified, image, createdAt, updatedAt) más los propios.
+// La contraseña no vive aquí: Better Auth guarda su hash en Account.password (providerId "credential").
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  name         String
-  phone        String?
-  passwordHash String
-  role         Role       @default(CUSTOMER)
-  status       UserStatus @default(ACTIVE)
-  createdAt    DateTime   @default(now())
+  id            String     @id @default(cuid())
+  email         String     @unique
+  name          String
+  emailVerified Boolean    @default(false)
+  image         String?
+  phone         String?
+  role          Role       @default(CUSTOMER)
+  status        UserStatus @default(ACTIVE)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
+  sessions  Session[]
+  accounts  Account[]
   addresses Address[]
   orders    Order[]
   favorites Favorite[]
   cart      CartItem[]
+}
+
+// Sesión de Better Auth. El token viaja en una cookie httpOnly.
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Método de acceso de un usuario. Con email y contraseña: providerId "credential" y el hash en password.
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Tokens de un solo uso de Better Auth (verificación de email, recuperación de contraseña).
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
 }
 
 model Address {

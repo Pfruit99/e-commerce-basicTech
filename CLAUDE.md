@@ -11,12 +11,13 @@ Stack: Next.js 16 (App Router, Cache Components), React 19, TypeScript, Tailwind
 
 ## Estado actual
 
-Interfaz completa con datos de ejemplo. Base de datos definida con Prisma 7 (`prisma/schema.prisma`, migración inicial, `src/lib/db.ts`) y con seed del catálogo de ejemplo (`prisma/seed.ts`). La tienda (home, categoría, producto, carrito, checkout, favoritos) ya lee el catálogo de la base; admin, cuenta y pedidos siguen con mock. Auth.js y pagos sin iniciar.
+Interfaz completa con datos de ejemplo. Base de datos definida con Prisma 7 (`prisma/schema.prisma`, migración inicial, `src/lib/db.ts`) y con seed del catálogo de ejemplo (`prisma/seed.ts`). La tienda (home, categoría, producto, carrito, checkout, favoritos) ya lee el catálogo de la base. Registro, login y rutas protegidas funcionan con Better Auth. Pedidos, pagos y datos del admin siguen con mock.
 
 ## Comandos
 
 - `npm run dev`: servidor en http://localhost:3000
 - `npm test`: Vitest sobre la lógica de `src/lib`
+- `npm run test:api`: Supertest contra un servidor en marcha (`npm run build && npm start` en el puerto de `BETTER_AUTH_URL`) con la base y el seed
 - Un solo archivo: `npx vitest run src/lib/cart.test.ts`; por nombre: `npx vitest run -t "texto"`
 - `npm run lint`, `npx tsc --noEmit`, `npm run build`
 - Base de datos (requiere Docker y `.env` copiado de `.env.example`): `npm run db:up`, `npm run db:deploy` (aplica migraciones), `npm run db:migrate` (crea una nueva), `npm run db:seed` (carga el catálogo de ejemplo, repetible), `npm run db:studio`. Tras clonar o cambiar el esquema: `npm run db:generate` (el cliente en `src/generated/` no se versiona).
@@ -36,7 +37,8 @@ Interfaz completa con datos de ejemplo. Base de datos definida con Prisma 7 (`pr
 
 - Estado del cliente (carrito, favoritos): `createPersistedStore` (`src/lib/persisted-store.ts`) envuelve `localStorage` para `useSyncExternalStore` y valida con `parse` lo leído. `cart-store.ts` y `favorites-store.ts` son hooks finos sobre él; la lógica real está en `cart.ts` y `favorites.ts`. Pendiente migrarlo a Zustand (`plan.md` §11).
 - Catálogo: las páginas leen con `src/lib/server/catalog.ts` (`use cache`, etiqueta `catalog`), nunca llamando a su propia API. Los componentes de cliente usan `/api/products` (listado paginado o `?ids=` vía `useCatalogProducts`). Cada Route Handler va envuelto en `handler()` (`src/lib/api-handler.ts`).
-- Las acciones del admin, login, registro y pago son inertes (muestran un aviso de demostración). No asumas que persisten nada.
+- Auth: Better Auth (`src/lib/auth.ts`, handler `/api/auth/[...all]`). Las reglas de acceso son puras en `src/lib/authz.ts`; `src/lib/server/session.ts` expone `requireUser`/`requireAdmin` (API) y `requirePageAccess` (páginas). `src/proxy.ts` solo es redirección optimista por cookie.
+- Las acciones del admin y el pago son inertes (muestran un aviso de demostración). No asumas que persisten nada.
 - Ninguna pantalla se ha probado en un navegador (`tsc`, `build`, `lint` y tests sí pasan).
 - `error.tsx` y `global-error.tsx` reciben `retry()`; en este Next reemplaza al antiguo `reset`. Ante dudas de API de Next, lee `node_modules/next/dist/docs/`.
 
@@ -45,5 +47,6 @@ Interfaz completa con datos de ejemplo. Base de datos definida con Prisma 7 (`pr
 - Con Cache Components, no uses `new Date()` ni datos dinámicos en componentes de servidor sin envolverlos; el build falla.
 - Tras mover o renombrar rutas, borra `.next` y luego corre `npx next typegen` antes de `npx tsc --noEmit`: sin `.next`, `PageProps`, `LayoutProps` y `RouteContext` no existen y `tsc` falla.
 - `npm run build` necesita la base levantada (`npm run db:up`): el catálogo se prerenderiza con datos de PostgreSQL.
-- `/admin/*` y `/cuenta/*` no tienen control de acceso todavía. No publicar así.
+- Una página nueva bajo `/admin` o `/cuenta` debe llamar a `requirePageAccess` ella misma: la guarda del layout no basta, porque Next renderiza la página por separado y su HTML se filtraría.
+- Los formularios de cliente y `getSession()` leen datos de la petición: van dentro de `<Suspense>` (Cache Components).
 - Secretos solo por variables de entorno. No hacer commit de `.env`.

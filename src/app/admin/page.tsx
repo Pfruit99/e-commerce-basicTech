@@ -9,8 +9,11 @@ import { formatUsd } from "@/lib/format";
 import { demoOrders } from "@/lib/mock-account";
 import { adminPayments, adminUsers, salesLast7Days } from "@/lib/mock-admin";
 import { getProductById, products } from "@/lib/mock-data";
+import { requirePageAccess } from "@/lib/server/session";
 
-export default function AdminDashboard() {
+export default async function AdminDashboard() {
+  // El layout también comprueba, pero Next renderiza la página por separado: sin esto su contenido se filtraría.
+  await requirePageAccess("admin", "/admin");
   const stats = dashboardStats(products, demoOrders, getProductById);
   const totals = paymentTotals(adminPayments);
   const lowStock = products.filter((p) => p.stock <= LOW_STOCK_LIMIT).sort((a, b) => a.stock - b.stock);

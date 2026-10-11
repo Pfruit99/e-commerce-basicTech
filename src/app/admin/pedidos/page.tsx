@@ -5,10 +5,13 @@ import { orderTotal } from "@/lib/admin";
 import { formatUsd } from "@/lib/format";
 import { demoOrders, sortOrdersByDate, statusLabels } from "@/lib/mock-account";
 import { getProductById } from "@/lib/mock-data";
+import { requirePageAccess } from "@/lib/server/session";
 
 const dateFormat = new Intl.DateTimeFormat("es", { dateStyle: "medium", timeZone: "UTC" });
 
-export default function AdminOrdersPage() {
+export default async function AdminOrdersPage() {
+  // El layout también comprueba, pero Next renderiza la página por separado: sin esto su contenido se filtraría.
+  await requirePageAccess("admin", "/admin/pedidos");
   const orders = sortOrdersByDate(demoOrders);
 
   return (

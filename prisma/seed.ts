@@ -1,11 +1,14 @@
 // Carga el catálogo de ejemplo (src/lib/mock-data.ts) en la base. Se ejecuta con `npm run db:seed`.
 // Es idempotente: usa upsert por slug y SKU, así que correrlo dos veces no duplica nada
 // y vuelve a dejar precio y stock como en el mock.
+// Si `.env` define SEED_ADMIN_EMAIL y SEED_ADMIN_PASSWORD, también crea (o actualiza) ese administrador.
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { hashPassword } from "better-auth/crypto";
 
 import { PrismaClient } from "../src/generated/prisma/client";
 import { categories, products } from "../src/lib/mock-data";
+import { PASSWORD_MAX, PASSWORD_MIN } from "../src/lib/auth-schemas";
 import { buildSeedData } from "../src/lib/seed-data";
 
 const connectionString = process.env.DATABASE_URL;
@@ -60,6 +63,43 @@ async function main() {
   console.log(
     `Seed listo: ${data.categories.length} categorías, ${data.brands.length} marcas, ${data.products.length} productos.`,
   );
+
+  await seedAdmin();
+}
+
+/**
+ * Administrador inicial con la misma forma que crea Better Auth al registrarse: `User` más una `Account`
+ * con providerId "credential" y el hash scrypt de la librería. Nunca hay contraseñas en el código.
+ */
+async function seedAdmin() {
+  const email = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+  const password = process.env.SEED_ADMIN_PASSWORD;
+  if (!email || !password) {
+    console.log("Sin SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD: no se crea administrador.");
+    return;
+  }
+  if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) {
+    throw new Error(`SEED_ADMIN_PASSWORD debe tener entre ${PASSWORD_MIN} y ${PASSWORD_MAX} caracteres.`);
+  }
+
+  const name = process.env.SEED_ADMIN_NAME?.trim() || "Administrador";
+  const hash = await hashPassword(password);
+
+  await db.$transaction(async (tx) => {
+    const user = await tx.user.upsert({
+      where: { email },
+      create: { email, name, role: "ADMIN", status: "ACTIVE", emailVerified: true },
+      update: { role: "ADMIN", status: "ACTIVE" },
+    });
+    const account = await tx.account.findFirst({ where: { userId: user.id, providerId: "credential" } });
+    if (account) {
+      await tx.account.update({ where: { id: account.id }, data: { password: hash } });
+    } else {
+      await tx.account.create({ data: { userId: user.id, accountId: user.id, providerId: "credential", password: hash } });
+    }
+  });
+
+  console.log(`Administrador listo: ${email}`);
 }
 
 main()

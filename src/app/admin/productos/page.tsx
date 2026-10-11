@@ -5,8 +5,11 @@ import { PageHeader } from "@/components/admin/page-header";
 import { ProductsTable } from "@/components/admin/products-table";
 import { buttonVariants } from "@/components/ui/button";
 import { products } from "@/lib/mock-data";
+import { requirePageAccess } from "@/lib/server/session";
 
-export default function AdminProductsPage() {
+export default async function AdminProductsPage() {
+  // El layout también comprueba, pero Next renderiza la página por separado: sin esto su contenido se filtraría.
+  await requirePageAccess("admin", "/admin/productos");
   return (
     <>
       <PageHeader

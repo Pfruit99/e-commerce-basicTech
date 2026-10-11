@@ -1,8 +1,10 @@
 "use client";
 
-import { Heart, Package, User } from "lucide-react";
+import { Heart, LogOut, Package, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import { useSignOut } from "@/components/account/use-sign-out";
 
 const links = [
   { href: "/cuenta", label: "Mi perfil", icon: User },
@@ -12,6 +14,7 @@ const links = [
 
 export function AccountNav() {
   const pathname = usePathname();
+  const signOut = useSignOut();
 
   return (
     <nav aria-label="Cuenta" className="flex gap-2 overflow-x-auto md:flex-col">
@@ -30,6 +33,13 @@ export function AccountNav() {
           </Link>
         );
       })}
+      <button
+        type="button"
+        onClick={signOut}
+        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm whitespace-nowrap text-muted-foreground transition-colors hover:bg-muted md:mt-4"
+      >
+        <LogOut className="size-4" /> Cerrar sesión
+      </button>
     </nav>
   );
 }
