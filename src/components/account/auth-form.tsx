@@ -1,71 +1,192 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, type ReactNode } from "react";
+import { useForm, type FieldValues, type Path, type UseFormRegister } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authClient } from "@/lib/auth-client";
+import {
+  PASSWORD_MIN,
+  authErrorMessage,
+  loginSchema,
+  registerSchema,
+  type LoginInput,
+  type RegisterInput,
+} from "@/lib/auth-schemas";
+import { safeRedirect } from "@/lib/authz";
 
-/**
- * Solo UI: no autentica ni guarda credenciales. La sesión real se conectará con
- * una librería de autenticación en la fase de backend.
- */
-export function AuthForm({ mode }: { mode: "login" | "register" }) {
-  const [submitted, setSubmitted] = useState(false);
-  const isRegister = mode === "register";
+type FieldProps<T extends FieldValues> = {
+  name: Path<T>;
+  label: string;
+  type?: string;
+  autoComplete: string;
+  hint?: string;
+  error?: string;
+  register: UseFormRegister<T>;
+};
 
-  const onSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
-  };
-
+function Field<T extends FieldValues>({ name, label, type = "text", autoComplete, hint, error, register }: FieldProps<T>) {
+  const describedBy = error ? `${name}-error` : hint ? `${name}-hint` : undefined;
   return (
-    <form onSubmit={onSubmit} className="mx-auto w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6">
-      <h1 className="text-2xl font-semibold tracking-tight">{isRegister ? "Crear cuenta" : "Iniciar sesión"}</h1>
-
-      {isRegister && (
-        <div className="space-y-1.5">
-          <Label htmlFor="name">Nombre y apellido</Label>
-          <Input id="name" name="name" autoComplete="name" required minLength={2} />
-        </div>
+    <div className="space-y-1.5">
+      <Label htmlFor={name}>{label}</Label>
+      <Input
+        id={name}
+        type={type}
+        autoComplete={autoComplete}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy}
+        {...register(name)}
+      />
+      {error ? (
+        <p id={`${name}-error`} className="text-xs text-destructive">
+          {error}
+        </p>
+      ) : (
+        hint && (
+          <p id={`${name}-hint`} className="text-xs text-muted-foreground">
+            {hint}
+          </p>
+        )
       )}
-      <div className="space-y-1.5">
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" autoComplete="email" required />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="password">Contraseña</Label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          autoComplete={isRegister ? "new-password" : "current-password"}
-          required
-          minLength={isRegister ? 8 : 1}
-        />
-        {isRegister && <p className="text-xs text-muted-foreground">Mínimo 8 caracteres.</p>}
-      </div>
+    </div>
+  );
+}
 
-      <Button type="submit" size="lg" className="w-full">
-        {isRegister ? "Crear cuenta" : "Entrar"}
-      </Button>
+/** Tras entrar o registrarse, vuelve a `?next=` (solo rutas internas) y refresca lo que dependía de la sesión. */
+function useAfterAuth() {
+  const router = useRouter();
+  const next = safeRedirect(useSearchParams().get("next"));
+  const done = () => {
+    router.replace(next);
+    router.refresh();
+  };
+  return { next, done };
+}
 
-      {submitted && (
-        <p role="status" className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-          Demostración: la autenticación todavía no está conectada.{" "}
-          <Link href="/cuenta" className="text-primary underline">
-            Ver mi cuenta de ejemplo
-          </Link>
+function FormShell({
+  title,
+  onSubmit,
+  error,
+  footer,
+  children,
+}: {
+  title: string;
+  onSubmit: () => void;
+  error: string | null;
+  footer: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <form onSubmit={onSubmit} noValidate className="mx-auto w-full max-w-sm space-y-4 rounded-2xl border bg-card p-6">
+      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+      {error && (
+        <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          {error}
         </p>
       )}
-
-      <p className="text-center text-sm text-muted-foreground">
-        {isRegister ? "¿Ya tenés cuenta?" : "¿No tenés cuenta?"}{" "}
-        <Link href={isRegister ? "/login" : "/registro"} className="text-primary hover:underline">
-          {isRegister ? "Iniciá sesión" : "Registrate"}
-        </Link>
-      </p>
+      {children}
+      <p className="text-center text-sm text-muted-foreground">{footer}</p>
     </form>
+  );
+}
+
+export function LoginForm() {
+  const { next, done } = useAfterAuth();
+  const [error, setError] = useState<string | null>(null);
+  const { register, handleSubmit, formState } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
+
+  const onSubmit = handleSubmit(async ({ email, password }) => {
+    setError(null);
+    const { error } = await authClient.signIn.email({ email, password });
+    if (error) return setError(authErrorMessage(error));
+    done();
+  });
+
+  return (
+    <FormShell
+      title="Iniciar sesión"
+      onSubmit={onSubmit}
+      error={error}
+      footer={
+        <>
+          ¿No tenés cuenta?{" "}
+          <Link href={`/registro?next=${encodeURIComponent(next)}`} className="text-primary hover:underline">
+            Registrate
+          </Link>
+        </>
+      }
+    >
+      <Field name="email" label="Email" type="email" autoComplete="email" register={register} error={formState.errors.email?.message} />
+      <Field
+        name="password"
+        label="Contraseña"
+        type="password"
+        autoComplete="current-password"
+        register={register}
+        error={formState.errors.password?.message}
+      />
+      <Button type="submit" size="lg" className="w-full" disabled={formState.isSubmitting}>
+        {formState.isSubmitting ? "Entrando…" : "Entrar"}
+      </Button>
+    </FormShell>
+  );
+}
+
+export function RegisterForm() {
+  const { next, done } = useAfterAuth();
+  const [error, setError] = useState<string | null>(null);
+  const { register, handleSubmit, formState } = useForm<RegisterInput>({ resolver: zodResolver(registerSchema) });
+
+  const onSubmit = handleSubmit(async ({ name, email, password }) => {
+    setError(null);
+    const { error } = await authClient.signUp.email({ name, email, password });
+    if (error) return setError(authErrorMessage(error));
+    done();
+  });
+
+  const errors = formState.errors;
+  return (
+    <FormShell
+      title="Crear cuenta"
+      onSubmit={onSubmit}
+      error={error}
+      footer={
+        <>
+          ¿Ya tenés cuenta?{" "}
+          <Link href={`/login?next=${encodeURIComponent(next)}`} className="text-primary hover:underline">
+            Iniciá sesión
+          </Link>
+        </>
+      }
+    >
+      <Field name="name" label="Nombre y apellido" autoComplete="name" register={register} error={errors.name?.message} />
+      <Field name="email" label="Email" type="email" autoComplete="email" register={register} error={errors.email?.message} />
+      <Field
+        name="password"
+        label="Contraseña"
+        type="password"
+        autoComplete="new-password"
+        hint={`Mínimo ${PASSWORD_MIN} caracteres.`}
+        register={register}
+        error={errors.password?.message}
+      />
+      <Field
+        name="confirmPassword"
+        label="Repetí la contraseña"
+        type="password"
+        autoComplete="new-password"
+        register={register}
+        error={errors.confirmPassword?.message}
+      />
+      <Button type="submit" size="lg" className="w-full" disabled={formState.isSubmitting}>
+        {formState.isSubmitting ? "Creando cuenta…" : "Crear cuenta"}
+      </Button>
+    </FormShell>
   );
 }

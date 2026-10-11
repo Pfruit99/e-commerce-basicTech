@@ -7,17 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { demoUser } from "@/lib/mock-account";
 
-const fields = [
-  { id: "name", label: "Nombre y apellido", value: demoUser.name, type: "text" },
-  { id: "email", label: "Email", value: demoUser.email, type: "email" },
-  { id: "phone", label: "Teléfono", value: demoUser.phone, type: "tel" },
-  { id: "address", label: "Dirección", value: demoUser.address, type: "text" },
-  { id: "city", label: "Ciudad", value: demoUser.city, type: "text" },
-  { id: "zip", label: "Código postal", value: demoUser.zip, type: "text" },
-];
+type ProfileUser = { name: string; email: string; phone: string };
 
-/** Solo UI: los cambios no se guardan. */
-export function ProfileForm() {
+/**
+ * Nombre, email y teléfono vienen de la sesión. La dirección sigue siendo de ejemplo hasta tener
+ * `/api/me/addresses`, y guardar todavía no persiste nada (falta `PATCH /api/me`).
+ */
+export function ProfileForm({ user }: { user: ProfileUser }) {
+  const fields = [
+    { id: "name", label: "Nombre y apellido", value: user.name, type: "text" },
+    { id: "email", label: "Email", value: user.email, type: "email" },
+    { id: "phone", label: "Teléfono", value: user.phone, type: "tel" },
+    { id: "address", label: "Dirección", value: demoUser.address, type: "text" },
+    { id: "city", label: "Ciudad", value: demoUser.city, type: "text" },
+    { id: "zip", label: "Código postal", value: demoUser.zip, type: "text" },
+  ];
   const [saved, setSaved] = useState(false);
 
   const onSubmit = (e: FormEvent) => {
@@ -31,7 +35,7 @@ export function ProfileForm() {
         {fields.map((f) => (
           <div key={f.id} className={`space-y-1.5 ${f.id === "address" ? "sm:col-span-2" : ""}`}>
             <Label htmlFor={f.id}>{f.label}</Label>
-            <Input id={f.id} name={f.id} type={f.type} defaultValue={f.value} required onChange={() => setSaved(false)} />
+            <Input id={f.id} name={f.id} type={f.type} defaultValue={f.value} required={f.id !== "phone"} onChange={() => setSaved(false)} />
           </div>
         ))}
       </div>

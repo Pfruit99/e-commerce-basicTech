@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { countBy, filterProducts, priceBounds, priceHistogram, sortProducts, type Filters } from "./catalog";
-import type { Product } from "./mock-data";
+import type { CatalogProduct } from "./catalog-types";
 
-const mk = (id: string, brand: string, price: number, specs: Record<string, string> = {}, popularity = 0): Product => ({
-  id, slug: id, name: `P${id}`, brand, category: "pc", price, stock: 1, popularity, isNew: false, specs,
+const mk = (id: string, brand: string, price: number, specs: Record<string, string> = {}, popularity = 0): CatalogProduct => ({
+  id, slug: id, name: `P${id}`, brand, category: "pc", priceCents: price, stock: 1, popularity, isNew: false, specs, variantId: `v${id}`, sku: id,
 });
 
 const items = [

@@ -5,12 +5,15 @@ import { PageHeader } from "@/components/admin/page-header";
 import { PaymentStatusBadge } from "@/components/admin/payment-status-badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { dashboardStats, LOW_STOCK_LIMIT, paymentTotals } from "@/lib/admin";
-import { formatPrice } from "@/lib/format";
+import { formatUsd } from "@/lib/format";
 import { demoOrders } from "@/lib/mock-account";
 import { adminPayments, adminUsers, salesLast7Days } from "@/lib/mock-admin";
 import { getProductById, products } from "@/lib/mock-data";
+import { requirePageAccess } from "@/lib/server/session";
 
-export default function AdminDashboard() {
+export default async function AdminDashboard() {
+  // El layout también comprueba, pero Next renderiza la página por separado: sin esto su contenido se filtraría.
+  await requirePageAccess("admin", "/admin");
   const stats = dashboardStats(products, demoOrders, getProductById);
   const totals = paymentTotals(adminPayments);
   const lowStock = products.filter((p) => p.stock <= LOW_STOCK_LIMIT).sort((a, b) => a.stock - b.stock);
@@ -18,10 +21,15 @@ export default function AdminDashboard() {
   const peak = Math.max(...salesLast7Days.map((d) => d.amount));
 
   const cards = [
-    { title: "Cobrado", value: formatPrice(totals.paid), icon: DollarSign },
-    { title: "Pedidos", value: `${stats.orderCount} (${stats.pendingOrderCount} pendientes)`, icon: ShoppingBag },
-    { title: "Usuarios", value: String(adminUsers.length), icon: Users },
-    { title: "Stock bajo o agotado", value: String(stats.lowStockCount + stats.outOfStockCount), icon: AlertTriangle },
+    { title: "Cobrado", value: formatUsd(totals.paid), note: undefined, icon: DollarSign },
+    { title: "Pedidos", value: String(stats.orderCount), note: `${stats.pendingOrderCount} pendientes`, icon: ShoppingBag },
+    { title: "Usuarios", value: String(adminUsers.length), note: undefined, icon: Users },
+    {
+      title: "Stock bajo o agotado",
+      value: String(stats.lowStockCount + stats.outOfStockCount),
+      note: undefined,
+      icon: AlertTriangle,
+    },
   ];
 
   return (
@@ -29,14 +37,17 @@ export default function AdminDashboard() {
       <PageHeader title="Resumen" description="Vista general de la tienda (datos de ejemplo)." />
 
       <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map(({ title, value, icon: Icon }) => (
+        {cards.map(({ title, value, note, icon: Icon }) => (
           <li key={title}>
             <Card>
               <CardHeader className="flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-                <Icon className="size-4 text-primary" />
+                <CardTitle className="spec-label">{title}</CardTitle>
+                <Icon className="size-4 text-muted-foreground" />
               </CardHeader>
-              <CardContent className="text-2xl font-semibold">{value}</CardContent>
+              <CardContent className="flex items-baseline gap-2">
+                <span className="spec-value text-3xl font-semibold tracking-tight">{value}</span>
+                {note && <span className="spec-value text-xs text-muted-foreground">{note}</span>}
+              </CardContent>
             </Card>
           </li>
         ))}
@@ -51,9 +62,9 @@ export default function AdminDashboard() {
             <ul className="flex h-48 items-end gap-3" aria-label="Ventas diarias en dólares">
               {salesLast7Days.map((d) => (
                 <li key={d.label} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
-                  <span className="text-xs text-muted-foreground">{formatPrice(d.amount)}</span>
-                  <div className="w-full rounded-t-md bg-primary/80" style={{ height: `${(d.amount / peak) * 75}%` }} />
-                  <span className="text-xs">{d.label}</span>
+                  <span className="spec-value text-xs text-muted-foreground">{formatUsd(d.amount)}</span>
+                  <div className="w-full rounded-t-sm bg-primary/80" style={{ height: `${(d.amount / peak) * 75}%` }} />
+                  <span className="spec-label">{d.label}</span>
                 </li>
               ))}
             </ul>
@@ -100,7 +111,7 @@ export default function AdminDashboard() {
                 </span>
                 <span className="flex shrink-0 items-center gap-3">
                   <PaymentStatusBadge status={p.status} />
-                  <span className="w-16 text-right font-medium">{formatPrice(p.amount)}</span>
+                  <span className="spec-value w-20 text-right font-medium">{formatUsd(p.amount)}</span>
                 </span>
               </li>
             ))}

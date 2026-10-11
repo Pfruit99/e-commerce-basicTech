@@ -4,16 +4,17 @@ import { Heart } from "lucide-react";
 import Link from "next/link";
 
 import { ProductCard } from "@/components/product/product-card";
+import { ProductsLoadState } from "@/components/product/products-load-state";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/lib/favorites-store";
-import { getProductById, type Product } from "@/lib/mock-data";
+import { useCatalogProducts } from "@/lib/use-catalog-products";
 
 export function FavoritesView() {
   const { ids } = useFavorites();
-  const items = ids.flatMap((id) => {
-    const product = getProductById(id);
-    return product ? [product] : [];
-  }) satisfies Product[];
+  const { find, loading, error, retry } = useCatalogProducts(ids);
+  const items = ids.flatMap((id) => find(id) ?? []);
+
+  if (items.length === 0 && (loading || error)) return <ProductsLoadState error={error} onRetry={retry} />;
 
   if (items.length === 0) {
     return (

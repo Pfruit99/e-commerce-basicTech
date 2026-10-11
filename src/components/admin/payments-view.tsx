@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { filterPayments, paymentTotals } from "@/lib/admin";
-import { formatPrice } from "@/lib/format";
+import { formatUsd } from "@/lib/format";
 import { paymentMethodLabels, paymentStatusLabels, type Payment, type PaymentStatus } from "@/lib/mock-admin";
 
 const dateFormat = new Intl.DateTimeFormat("es", { dateStyle: "medium", timeZone: "UTC" });
@@ -31,7 +31,7 @@ export function PaymentsView({ payments }: { payments: Payment[] }) {
               <CardHeader className="space-y-0">
                 <CardTitle className="text-sm font-medium text-muted-foreground">{paymentStatusLabels[s]}</CardTitle>
               </CardHeader>
-              <CardContent className="text-2xl font-semibold">{formatPrice(totals[s])}</CardContent>
+              <CardContent className="text-2xl font-semibold">{formatUsd(totals[s])}</CardContent>
             </Card>
           </li>
         ))}
@@ -92,7 +92,7 @@ export function PaymentsView({ payments }: { payments: Payment[] }) {
                   <TableCell>
                     <PaymentStatusBadge status={p.status} />
                   </TableCell>
-                  <TableCell className="text-right font-medium">{formatPrice(p.amount)}</TableCell>
+                  <TableCell className="text-right font-medium">{formatUsd(p.amount)}</TableCell>
                   <TableCell>
                     <RowActions
                       label={`Acciones del pago ${p.id}`}

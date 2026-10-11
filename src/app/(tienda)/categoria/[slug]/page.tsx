@@ -11,22 +11,25 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { categories, getCategory, getProductsByCategory } from "@/lib/mock-data";
+import { DEFAULT_PAGE_SIZE, buildFacets, paginate } from "@/lib/catalog-api";
+import { getCategories, getCategory, getCategoryProducts } from "@/lib/server/catalog";
 
-export function generateStaticParams() {
-  return categories.map((c) => ({ slug: c.slug }));
+export async function generateStaticParams() {
+  return (await getCategories()).map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/categoria/[slug]">): Promise<Metadata> {
-  const category = getCategory((await params).slug);
+  const category = await getCategory((await params).slug);
   return { title: category ? `${category.name} | basicTech` : "basicTech" };
 }
 
 export default async function CategoryPage({ params }: PageProps<"/categoria/[slug]">) {
-  const category = getCategory((await params).slug);
+  const category = await getCategory((await params).slug);
   if (!category) notFound();
 
-  const products = getProductsByCategory(category.slug);
+  const products = await getCategoryProducts(category.slug);
+  const facets = buildFacets(products, category.filterKeys);
+  const initial = paginate(products, "popular", 1, DEFAULT_PAGE_SIZE);
 
   return (
     <>
@@ -52,7 +55,7 @@ export default async function CategoryPage({ params }: PageProps<"/categoria/[sl
         <h2 className="mt-3 mb-6 text-2xl font-semibold">
           {products.length} resultados para {category.name.toLowerCase()}
         </h2>
-        <CatalogView category={category} products={products} />
+        <CatalogView category={category} facets={facets} initial={initial} />
       </div>
     </>
   );

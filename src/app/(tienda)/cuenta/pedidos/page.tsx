@@ -2,15 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
-import { formatPrice } from "@/lib/format";
+import { formatUsd } from "@/lib/format";
 import { demoOrders, sortOrdersByDate, statusLabels } from "@/lib/mock-account";
 import { getProductById } from "@/lib/mock-data";
+import { requirePageAccess } from "@/lib/server/session";
 
 export const metadata: Metadata = { title: "Mis pedidos | basicTech" };
 
 const dateFormat = new Intl.DateTimeFormat("es", { dateStyle: "long", timeZone: "UTC" });
 
-export default function OrdersPage() {
+export default async function OrdersPage() {
+  // El layout también comprueba, pero Next renderiza la página por separado: sin esto su contenido se filtraría.
+  await requirePageAccess("user", "/cuenta/pedidos");
   const orders = sortOrdersByDate(demoOrders);
 
   return (
@@ -43,7 +46,7 @@ export default function OrdersPage() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-right font-semibold">{formatPrice(total)}</p>
+              <p className="mt-3 text-right font-semibold">{formatUsd(total)}</p>
             </li>
           );
         })}

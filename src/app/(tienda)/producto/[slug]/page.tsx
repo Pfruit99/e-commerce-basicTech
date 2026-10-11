@@ -16,7 +16,8 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getCategory, getProductBySlug, getRelatedProducts, products } from "@/lib/mock-data";
+import { rankRelated } from "@/lib/catalog-api";
+import { getCategory, getCategoryProducts, getProductBySlug, getProductSlugs } from "@/lib/server/catalog";
 
 const sampleReviews = [
   { author: "Martín R.", rating: 5, text: "Excelente relación precio-calidad. Llegó rápido y bien embalado." },
@@ -24,21 +25,22 @@ const sampleReviews = [
   { author: "Diego P.", rating: 5, text: "Justo lo que buscaba para mi setup." },
 ];
 
-export function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
+export async function generateStaticParams() {
+  return (await getProductSlugs()).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/producto/[slug]">): Promise<Metadata> {
-  const product = getProductBySlug((await params).slug);
+  const product = await getProductBySlug((await params).slug);
   return { title: product ? `${product.name} | basicTech` : "basicTech" };
 }
 
 export default async function ProductPage({ params }: PageProps<"/producto/[slug]">) {
-  const product = getProductBySlug((await params).slug);
+  const product = await getProductBySlug((await params).slug);
   if (!product) notFound();
 
-  const category = getCategory(product.category)!;
-  const related = getRelatedProducts(product);
+  const [category, siblings] = await Promise.all([getCategory(product.category), getCategoryProducts(product.category)]);
+  if (!category) notFound();
+  const related = rankRelated(product, siblings);
   const specEntries = Object.entries(product.specs);
   const average = sampleReviews.reduce((sum, r) => sum + r.rating, 0) / sampleReviews.length;
 

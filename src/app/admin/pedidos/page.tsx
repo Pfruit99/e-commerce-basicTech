@@ -2,13 +2,16 @@ import { PageHeader } from "@/components/admin/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { orderTotal } from "@/lib/admin";
-import { formatPrice } from "@/lib/format";
+import { formatUsd } from "@/lib/format";
 import { demoOrders, sortOrdersByDate, statusLabels } from "@/lib/mock-account";
 import { getProductById } from "@/lib/mock-data";
+import { requirePageAccess } from "@/lib/server/session";
 
 const dateFormat = new Intl.DateTimeFormat("es", { dateStyle: "medium", timeZone: "UTC" });
 
-export default function AdminOrdersPage() {
+export default async function AdminOrdersPage() {
+  // El layout también comprueba, pero Next renderiza la página por separado: sin esto su contenido se filtraría.
+  await requirePageAccess("admin", "/admin/pedidos");
   const orders = sortOrdersByDate(demoOrders);
 
   return (
@@ -34,7 +37,7 @@ export default function AdminOrdersPage() {
                   <Badge variant={o.status === "delivered" ? "secondary" : "default"}>{statusLabels[o.status]}</Badge>
                 </TableCell>
                 <TableCell className="text-right">{o.items.reduce((n, i) => n + i.qty, 0)}</TableCell>
-                <TableCell className="text-right">{formatPrice(orderTotal(o, getProductById))}</TableCell>
+                <TableCell className="text-right">{formatUsd(orderTotal(o, getProductById))}</TableCell>
               </TableRow>
             ))}
           </TableBody>

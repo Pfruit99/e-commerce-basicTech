@@ -1,8 +1,8 @@
 import Link from "next/link";
 
-import { categories } from "@/components/layout/site-header";
+import type { NavCategory } from "@/components/layout/site-header";
 
-export function SiteFooter() {
+export function SiteFooter({ categories }: { categories: NavCategory[] }) {
   return (
     <footer className="mt-16 border-t bg-muted/40">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-3">
